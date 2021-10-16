@@ -1,52 +1,39 @@
 const fs = require('fs');
 const path = require('path');
 const { ApolloServer } = require('apollo-server');
-
-let links = [
-  {
-    id: '1',
-    url: 'howtographql.com',
-    description: 'tuts for geeks'
-  }
-];
-
-let linksCount = 1;
+const { PrismaClient } = require('@prisma/client');
+const Query = require('./resolvers/Query');
+const Mutation = require('./resolvers/Mutation');
+const User = require('./resolvers/User');
+const Link = require('./resolvers/Link');
+const { getUserId } = require('./utils');
 
 const resolvers = {
-  Query: {
-    info: () => "This is the real hackernews website",
-    feed: () => links
-  },
-
-  Mutation: {
-    post: (parent, args) => {
-      linksCount += 1;
-
-      const newLink = {
-        id: linksCount,
-        description: args.description,
-        url: args.url
-      }
-
-      links.push(newLink);
-
-      return newLink;
-    }
-  }
-
-  // Link: {
-  //   id: (parent) => parent.id,
-  //   url: (parent) => parent.url,
-  //   description: (parent) => parent.description
-  // }
+  Query,
+  Mutation,
+  User,
+  Link
 }
+
+const prisma = new PrismaClient;
 
 const server = new ApolloServer({
   typeDefs: fs.readFileSync(
     path.join(__dirname, 'schema.graphql'),
     'utf8'
   ),
-  resolvers
+  resolvers,
+  context: ({ req }) => {
+    return {
+      ...req,
+      prisma,
+      userId: (
+        req && req.headers.authorization
+        ? getUserId(req)
+        : null
+      )
+    }
+  }
 });
 
 

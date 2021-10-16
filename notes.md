@@ -6,3 +6,4 @@
 2. Create a migration for the change using `prisma migrate`
 3. Generate or regenerate the prisma client
 4. Use the prisma client in your application
+
